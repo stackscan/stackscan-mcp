@@ -6,7 +6,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server for the
 [StackScan](https://www.stackscan.com) Tech Lookup API. Point Claude, Cursor, or any
 other MCP client at it and you can ask things like:
 
-> What is shopify.com built on?
+> What is example.com built on?
 >
 > Who's behind vercel.com? Where are they, what industry, what's their LinkedIn?
 >

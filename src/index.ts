@@ -255,7 +255,7 @@ server.registerTool(
       "Use this when asked who owns or operates a website, or to enrich a domain into firmographics. " +
       "Costs 1 credit.",
     inputSchema: {
-      domain: z.string().describe("Bare domain, e.g. shopify.com (no scheme, no path)"),
+      domain: z.string().describe("Bare domain, e.g. example.com (no scheme, no path)"),
     },
   },
   async ({ domain }) => {
@@ -308,7 +308,7 @@ server.registerTool(
       "each with its category and how many sites overall use it. " +
       "Use this to answer 'what is this site built with?'. Costs 1 credit.",
     inputSchema: {
-      domain: z.string().describe("Bare domain, e.g. shopify.com (no scheme, no path)"),
+      domain: z.string().describe("Bare domain, e.g. example.com (no scheme, no path)"),
       limit: z.number().int().min(1).max(50).optional().describe("Max technologies to return (default 25, cap 50)"),
     },
   },
@@ -424,7 +424,7 @@ server.registerTool(
         .array(z.string())
         .min(1)
         .max(BATCH_MAX)
-        .describe(`Bare domains, e.g. ["shopify.com","stripe.com"]. Maximum ${BATCH_MAX}.`),
+        .describe(`Bare domains, e.g. ["example.com","stripe.com"]. Maximum ${BATCH_MAX}.`),
     },
   },
   async ({ domains }) => {
