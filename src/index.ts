@@ -555,6 +555,175 @@ server.registerTool(
   },
 );
 
+/**
+ * Technologies per domain in a batch result.
+ *
+ * Lower than the REST endpoint's default of 10 for the same reason BATCH_MAX
+ * is lower than 100: this lands in the model's context. Twenty domains at ten
+ * technologies each is two hundred rows, which crowds out the conversation.
+ * Six covers the recognisable stack of a typical site (the median domain has
+ * three technologies overall) and the count of what was left out is always
+ * reported, so the model can offer to drill in with lookup_domain_technologies.
+ */
+const BATCH_PER_DOMAIN = 6;
+
+server.registerTool(
+  "lookup_domains_technologies",
+  {
+    description:
+      `Look up the technologies on up to ${BATCH_MAX} domains in ONE call, returned as a compact table. ` +
+      "Prefer this over repeated lookup_domain_technologies calls whenever you have several domains in hand - " +
+      "it is one request instead of many and costs the same per resolved domain. Answers questions like " +
+      "'which of these run Shopify?'. Pass `category` to narrow to one kind of technology. " +
+      "For the full detail on ONE domain (every technology with its category and global usage), use " +
+      "lookup_domain_technologies instead. Duplicates and www. variants collapse and are charged once. " +
+      "Costs 1 credit per domain that HAS data; misses and malformed domains are free.",
+    inputSchema: {
+      domains: z
+        .array(z.string())
+        .min(1)
+        .max(BATCH_MAX)
+        .describe(`Bare domains, e.g. ["example.com","stripe.com"]. Maximum ${BATCH_MAX}.`),
+      category: z
+        .string()
+        .optional()
+        .describe(
+          'Only return technologies in this category, e.g. "Ecommerce" or "Hosting & Infrastructure". ' +
+            "Case-insensitive. Omit for all categories.",
+        ),
+      per_domain: z
+        .number()
+        .int()
+        .min(1)
+        .max(25)
+        .optional()
+        .describe(`Technologies to show per domain (default ${BATCH_PER_DOMAIN}, max 25).`),
+    },
+  },
+  async ({ domains, category, per_domain }) => {
+    // Collapse before checking affordability, so the budget is measured
+    // against what will actually be charged rather than what was typed.
+    const unique = [...new Set(domains.map((d) => d.trim().toLowerCase()).filter((d) => d !== ""))];
+
+    if (unique.length === 0) {
+      return text("No usable domains were given.");
+    }
+
+    const remaining = SESSION_LOOKUP_CAP - lookupsThisSession;
+
+    if (remaining <= 0) {
+      return refuseIfCapReached()!;
+    }
+
+    // Refuse rather than silently truncate, same as lookup_companies.
+    if (unique.length > remaining) {
+      return text(
+        `That would cost up to ${unique.length} credits, but only ${remaining} of this session's ` +
+          `${SESSION_LOOKUP_CAP}-lookup cap remain. Nothing was charged. Ask for ${remaining} domains or fewer, ` +
+          `or tell the user they can raise STACKSCAN_SESSION_LOOKUP_CAP.`,
+      );
+    }
+
+    const perDomain = per_domain ?? BATCH_PER_DOMAIN;
+
+    type TechRow = {
+      technology?: string;
+      name?: string;
+      category?: string | null;
+      sub_category?: string | null;
+      total_sites?: number;
+    };
+    type BatchResult = {
+      success: boolean;
+      domain?: string;
+      error?: string;
+      technologies?: TechRow[];
+      total_technologies?: number;
+      has_more?: boolean;
+    };
+    type Batch = {
+      requested: number;
+      resolved: number;
+      served: number;
+      credits_charged: number;
+      per_domain: number;
+      category: string | null;
+      results: BatchResult[];
+      not_found: string[];
+      invalid: string[];
+      skipped_insufficient_credits: string[];
+    };
+
+    const body: Record<string, unknown> = { domains: unique, per_domain: perDomain };
+    if (category && category.trim() !== "") {
+      body.category = category.trim();
+    }
+
+    const result = await apiPost<Batch>("domains/batch", body);
+    if (!result.ok) return text(result.message);
+
+    const d = result.data;
+
+    // Trust the server's own figure rather than counting rows: it is what was
+    // actually billed, and it already accounts for collapsed duplicates.
+    recordSpend(d.credits_charged);
+
+    const hits = d.results.filter((r) => r.success && (r.technologies?.length ?? 0) > 0);
+
+    // Clip two short of the column width so a long value cannot run into the
+    // next column - see the same helper in lookup_companies.
+    const cell = (v: string | null | undefined, width: number) => {
+      const s = (v ?? "-").trim() || "-";
+      const max = width - 2;
+      return (s.length > max ? s.slice(0, max - 1) + "…" : s).padEnd(width);
+    };
+
+    const scope = d.category ? ` in "${d.category}"` : "";
+    const lines = [
+      `${d.requested} domains requested, ${hits.length} with technologies${scope} (${d.credits_charged} credits).`,
+      "",
+    ];
+
+    // Names joined per domain rather than a row per technology: this is the
+    // breadth view. Depth (category and global usage per technology) is what
+    // lookup_domain_technologies is for, and the description says so.
+    for (const r of hits) {
+      const names = (r.technologies ?? []).map((t) => t.technology ?? t.name ?? "?");
+      const total = r.total_technologies ?? names.length;
+      const hidden = total - names.length;
+      const more = hidden > 0 ? ` (+${hidden} more)` : "";
+      lines.push(`  ${cell(r.domain, 26)}${names.join(", ")}${more}`);
+    }
+
+    if (d.not_found.length > 0) {
+      const label = d.category ? `No technologies${scope} (not charged)` : "No data (not charged)";
+      lines.push("", `  ${label}: ${d.not_found.join(", ")}`);
+    }
+    if (d.invalid.length > 0) {
+      lines.push("", `  Not valid domains (not charged): ${d.invalid.join(", ")}`);
+    }
+    // The account ran dry mid-request. Distinct from "no data": these are worth
+    // retrying after a top-up, and the model should say so rather than report
+    // them as having nothing.
+    if (d.skipped_insufficient_credits.length > 0) {
+      lines.push(
+        "",
+        `  NOT looked up - the account ran out of credits: ${d.skipped_insufficient_credits.join(", ")}`,
+        "  These still have data. Retry them after topping up.",
+      );
+    }
+
+    const spent = SESSION_LOOKUP_CAP - lookupsThisSession;
+    const balance = lastKnownBalance === null ? "" : ` Account balance was ${lastKnownBalance} credits at last check.`;
+    lines.push(
+      "",
+      `(Used ${d.credits_charged} credits. ${spent} of this session's ${SESSION_LOOKUP_CAP} lookups remaining.${balance})`,
+    );
+
+    return text(lines.join("\n"));
+  },
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

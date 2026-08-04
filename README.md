@@ -64,16 +64,26 @@ environment variables. Check your client's own MCP docs for where its config fil
 |---|---|---|
 | `check_credits` | Remaining balance and this month's allocation | free |
 | `lookup_company` | The company behind a domain: name, industry, city, country, LinkedIn | 1 credit |
-| `lookup_domain_technologies` | Technologies detected on a domain, with categories (`limit`, max 50) | 1 credit |
+| `lookup_domain_technologies` | Technologies on ONE domain, in full: category and global usage for each (`limit`, default 50, max 100) | 1 credit |
 | `lookup_technology` | How many sites run a technology, and where they are | 1 credit |
-| `lookup_companies` | Up to 20 domains in one call, returned as a compact table | 1 credit per domain with data |
+| `lookup_companies` | The companies behind up to 20 domains, as a compact table | 1 credit per domain with data |
+| `lookup_domains_technologies` | The technologies on up to 20 domains, as a compact table. Optional `category` filter | 1 credit per domain with data |
 
 A lookup that finds nothing is **not** charged. Neither is `check_credits`.
 
-### Why `lookup_companies` stops at 20
+### Breadth vs depth
 
-The REST endpoint behind it takes 100 domains per request, and this tool
-deliberately does not. A tool result goes straight into the model's context, and a
+There are two technology tools and they answer different questions.
+`lookup_domains_technologies` is the **breadth** view: many domains, technology
+names only, ideal for "which of these run Shopify?". `lookup_domain_technologies`
+is the **depth** view: one domain, every technology with its category and how many
+sites use it globally. The batch tool reports how many technologies it left out per
+domain, so the model can offer to drill in.
+
+### Why the batch tools stop at 20
+
+The REST endpoints behind them take 100 domains per request, and these tools
+deliberately do not. A tool result goes straight into the model's context, and a
 hundred full company payloads is tens of thousands of tokens, which crowds out the
 conversation you are actually having, and the model then has to re-read all of it
 to answer anything. Twenty compact rows is a table a model can reason over.
