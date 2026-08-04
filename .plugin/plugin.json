@@ -1,0 +1,21 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "StackScan",
+  "version": "0.2.1",
+  "description": "Look up the technology stack behind any domain, and the company running it, from inside your assistant.",
+  "author": {
+    "name": "StackScan",
+    "url": "https://www.stackscan.com"
+  },
+  "homepage": "https://www.stackscan.com/mcp",
+  "repository": "https://github.com/stackscan/stackscan-mcp",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "technographics",
+    "tech-stack",
+    "firmographics",
+    "lead-generation",
+    "enrichment"
+  ]
+}

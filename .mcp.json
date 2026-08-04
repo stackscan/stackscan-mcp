@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "stackscan": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@stackscan/mcp-server"],
+      "env": {
+        "STACKSCAN_API_TOKEN": "${STACKSCAN_API_TOKEN}",
+        "STACKSCAN_TENANT_ID": "${STACKSCAN_TENANT_ID}"
+      }
+    }
+  }
+}

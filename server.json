@@ -1,0 +1,39 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.stackscan/mcp-server",
+  "description": "Look up the technology stack behind any domain, and the company running it.",
+  "repository": {
+    "url": "https://github.com/stackscan/stackscan-mcp",
+    "source": "github"
+  },
+  "version": "0.2.1",
+  "websiteUrl": "https://www.stackscan.com/mcp",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@stackscan/mcp-server",
+      "version": "0.2.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "STACKSCAN_API_TOKEN",
+          "description": "API token from the StackScan dashboard, My Account -> API Tokens.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "STACKSCAN_TENANT_ID",
+          "description": "Workspace UUID, shown on the same page as the token.",
+          "isRequired": true
+        },
+        {
+          "name": "STACKSCAN_SESSION_LOOKUP_CAP",
+          "description": "Maximum credit-consuming lookups per session. Defaults to 25.",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

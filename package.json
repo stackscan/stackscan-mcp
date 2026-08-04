@@ -1,6 +1,7 @@
 {
   "name": "@stackscan/mcp-server",
-  "version": "0.2.0",
+  "mcpName": "com.stackscan/mcp-server",
+  "version": "0.2.1",
   "description": "MCP server for the StackScan Tech Lookup API - look up the technology stack and the company behind any domain.",
   "keywords": [
     "mcp",
