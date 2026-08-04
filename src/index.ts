@@ -16,7 +16,12 @@
 
 import { McpServer } from "@modelcontextprotocol/server";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { createRequire } from "node:module";
 import { z } from "zod";
+
+// The version from package.json, so the MCP handshake can never drift from
+// the published version again (0.1.1 shipped introducing itself as 0.1.0).
+const PKG_VERSION: string = createRequire(import.meta.url)("../package.json").version;
 
 const API_BASE = (process.env.STACKSCAN_API_BASE ?? "https://api.stackscan.com").replace(/\/+$/, "");
 
@@ -215,7 +220,7 @@ function budgetNote(): string {
   return `\n\n(Used 1 credit. ${remaining} of this session's ${SESSION_LOOKUP_CAP} lookups remaining.${balance})`;
 }
 
-const server = new McpServer({ name: "stackscan", version: "0.1.0" });
+const server = new McpServer({ name: "stackscan", version: PKG_VERSION });
 
 server.registerTool(
   "check_credits",
