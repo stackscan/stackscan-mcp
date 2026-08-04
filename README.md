@@ -8,7 +8,7 @@ other MCP client at it and you can ask things like:
 
 > What is shopify.com built on?
 >
-> Who's behind vercel.com — where are they, what industry, what's their LinkedIn?
+> Who's behind vercel.com? Where are they, what industry, what's their LinkedIn?
 >
 > How many sites run Klaviyo, and in which countries?
 
@@ -53,7 +53,7 @@ claude mcp add stackscan \
 
 ### Cursor, Windsurf, and others
 
-Same shape — `command: npx`, `args: ["-y", "@stackscan/mcp-server"]`, and the two
+Same shape: `command: npx`, `args: ["-y", "@stackscan/mcp-server"]`, and the two
 environment variables. Check your client's own MCP docs for where its config file lives.
 
 ---
@@ -74,12 +74,12 @@ A lookup that finds nothing is **not** charged. Neither is `check_credits`.
 
 The REST endpoint behind it takes 100 domains per request, and this tool
 deliberately does not. A tool result goes straight into the model's context, and a
-hundred full company payloads is tens of thousands of tokens — it crowds out the
+hundred full company payloads is tens of thousands of tokens, which crowds out the
 conversation you are actually having, and the model then has to re-read all of it
 to answer anything. Twenty compact rows is a table a model can reason over.
 
 It also refuses rather than truncates. If a batch would cost more than your session
-cap allows, it charges nothing and tells you how many you can afford — quietly
+cap allows, it charges nothing and tells you how many you can afford. Quietly
 dropping domains would hand back an answer that looks complete and is not.
 
 If you genuinely need hundreds of domains, that is what the
@@ -91,14 +91,14 @@ If you genuinely need hundreds of domains, that is what the
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
-| `STACKSCAN_API_TOKEN` | yes | — | Dashboard → API Tokens |
-| `STACKSCAN_TENANT_ID` | yes | — | Your workspace UUID, same page |
+| `STACKSCAN_API_TOKEN` | yes | none | Dashboard → API Tokens |
+| `STACKSCAN_TENANT_ID` | yes | none | Your workspace UUID, same page |
 | `STACKSCAN_API_BASE` | no | `https://api.stackscan.com` | Rarely needed |
 | `STACKSCAN_SESSION_LOOKUP_CAP` | no | `25` | See below |
 
 ### The session cap is a spend cap, and it is deliberate
 
-StackScan's own limit is a **rate** limit — requests per minute. That stops a burst. It
+StackScan's own limit is a **rate** limit: requests per minute. That stops a burst. It
 does nothing to stop a patient agent quietly spending an entire credit balance over an
 afternoon, which is a failure mode humans clicking buttons do not have.
 
@@ -108,7 +108,7 @@ against it, because they are never charged. Every successful result carries a fo
 showing lookups remaining and your last known balance, so the model can pace itself
 instead of discovering the limit by hitting it.
 
-Raise it deliberately if you mean to — `"STACKSCAN_SESSION_LOOKUP_CAP": "200"` — rather
+If you mean to go higher, raise it deliberately (`"STACKSCAN_SESSION_LOOKUP_CAP": "200"`) rather
 than finding out afterwards.
 
 ---
@@ -144,7 +144,7 @@ code reads the absent payload and crashes. Every response goes through one place
 separates a miss from a failure, so only a real failure is reported as an error.
 
 **Cached responses are still charged.** The API's response cache shields its database,
-not your wallet — a repeat lookup inside the cache window costs the same credit. That is
+not your wallet: a repeat lookup inside the cache window costs the same credit. That is
 why the local balance decrements on every hit instead of trying to guess which calls
 were free.
 
@@ -164,5 +164,5 @@ will not break you.
 
 MIT. See [LICENSE](LICENSE).
 
-The licence covers this client only — roughly 500 lines that make HTTP requests.
+The licence covers this client only, roughly 500 lines that make HTTP requests.
 The StackScan data it reaches is a paid service and is not covered by it.

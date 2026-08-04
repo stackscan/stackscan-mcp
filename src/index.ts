@@ -72,7 +72,7 @@ if (!API_TOKEN || !TENANT_ID) {
 /**
  * `noData` distinguishes "StackScan has nothing for this input" from a real
  * failure. The API signals a miss as HTTP 200 with `{success: false}` rather
- * than a 404, and — verified against staging — a miss is NOT charged while a
+ * than a 404, and (verified against staging) a miss is NOT charged while a
  * hit is. Both facts matter: a naive client reads the 200 as success and
  * crashes on the absent payload, and counting misses against a spend cap would
  * bill the user's budget for nothing.
@@ -127,7 +127,7 @@ async function apiSend<T>(url: URL, init: RequestInit = {}): Promise<ApiResult<T
     body = JSON.parse(raw);
   } catch {
     // A bot-protection interstitial is HTML, not JSON, and is by far the most
-    // likely cause of a non-JSON reply — the edge blocks non-browser TLS
+    // likely cause of a non-JSON reply: the edge blocks non-browser TLS
     // fingerprints before the request ever reaches StackScan. Say so, because
     // "non-JSON 403" sends people hunting for a bug in their token.
     const challenged =
@@ -145,7 +145,7 @@ async function apiSend<T>(url: URL, init: RequestInit = {}): Promise<ApiResult<T
   }
 
   if (response.ok) {
-    // A miss arrives as 200 {success: false, error: "..."} — not a 404.
+    // A miss arrives as 200 {success: false, error: "..."}, not a 404.
     if ((body as { success?: boolean }).success === false) {
       return {
         ok: false,
