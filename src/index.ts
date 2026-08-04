@@ -314,7 +314,7 @@ server.registerTool(
       "Use this to answer 'what is this site built with?'. Costs 1 credit.",
     inputSchema: {
       domain: z.string().describe("Bare domain, e.g. example.com (no scheme, no path)"),
-      limit: z.number().int().min(1).max(50).optional().describe("Max technologies to return (default 25, cap 50)"),
+      limit: z.number().int().min(1).max(100).optional().describe("Max technologies to return (default 50, cap 100). 50 is the full stack for over 99.9% of domains."),
     },
   },
   async ({ domain, limit }) => {
@@ -332,7 +332,7 @@ server.registerTool(
       }>;
       pagination: { total: number };
     };
-    const result = await apiGet<Domain>("domains/lookup", { domain, per_page: limit ?? 25 });
+    const result = await apiGet<Domain>("domains/lookup", { domain, per_page: limit ?? 50 });
     if (!result.ok) return text(result.noData ? noDataNote(`the domain ${domain}`) : result.message);
     recordSpend();
 
