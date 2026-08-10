@@ -558,14 +558,17 @@ server.registerTool(
 /**
  * Technologies per domain in a batch result.
  *
- * Lower than the REST endpoint's default of 10 for the same reason BATCH_MAX
- * is lower than 100: this lands in the model's context. Twenty domains at ten
- * technologies each is two hundred rows, which crowds out the conversation.
- * Six covers the recognisable stack of a typical site (the median domain has
- * three technologies overall) and the count of what was left out is always
- * reported, so the model can offer to drill in with lookup_domain_technologies.
+ * The default stays modest for the same reason BATCH_MAX is lower than 100:
+ * this lands in the model's context, and twenty domains at fifty technologies
+ * each would crowd out the conversation. Ten matches the REST endpoint and
+ * covers 94% of domains completely.
+ *
+ * The ceiling is the endpoint's own maximum, so a model that actually needs a
+ * full stack can ask for it rather than being capped below what the API can
+ * return. The count of what was left out is always reported either way.
  */
-const BATCH_PER_DOMAIN = 6;
+const BATCH_PER_DOMAIN = 10;
+const BATCH_PER_DOMAIN_MAX = 50;
 
 server.registerTool(
   "lookup_domains_technologies",
@@ -595,9 +598,12 @@ server.registerTool(
         .number()
         .int()
         .min(1)
-        .max(25)
+        .max(BATCH_PER_DOMAIN_MAX)
         .optional()
-        .describe(`Technologies to show per domain (default ${BATCH_PER_DOMAIN}, max 25).`),
+        .describe(
+          `Technologies to show per domain (default ${BATCH_PER_DOMAIN}, max ${BATCH_PER_DOMAIN_MAX}). ` +
+            "Raising it does not cost extra credits, only context.",
+        ),
     },
   },
   async ({ domains, category, per_domain }) => {
