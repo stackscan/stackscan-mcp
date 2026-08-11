@@ -1,2 +1,5 @@
 node_modules/
 build/
+
+# npm login writes an auth token here and this repo is public
+.npmrc
