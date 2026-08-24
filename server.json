@@ -6,13 +6,13 @@
     "url": "https://github.com/stackscan/stackscan-mcp",
     "source": "github"
   },
-  "version": "0.2.1",
+  "version": "0.3.0",
   "websiteUrl": "https://www.stackscan.com/mcp",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@stackscan/mcp-server",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },

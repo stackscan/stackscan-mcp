@@ -56,7 +56,12 @@ const TENANT_ID = process.env.STACKSCAN_TENANT_ID;
  * is a spend cap, not a rate limit, and it is deliberately low by default -
  * raise it explicitly rather than discovering the balance is gone.
  */
-const SESSION_LOOKUP_CAP = Number.parseInt(process.env.STACKSCAN_SESSION_LOOKUP_CAP ?? "25", 10);
+const SESSION_LOOKUP_CAP = ((): number => {
+  // An unset optional config reaches us as "", not as undefined, so ?? is not
+  // enough: NaN here would make the cap comparison always false.
+  const n = Number.parseInt(process.env.STACKSCAN_SESSION_LOOKUP_CAP ?? "", 10);
+  return Number.isFinite(n) && n > 0 ? n : 25;
+})();
 let lookupsThisSession = 0;
 
 /** Most recent balance seen, so tool results can report it without spending a call. */
@@ -225,6 +230,8 @@ const server = new McpServer({ name: "stackscan", version: PKG_VERSION });
 server.registerTool(
   "check_credits",
   {
+    title: "Check credit balance",
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       "Check the StackScan credit balance. Free - does not consume a credit. " +
       "Call this before a batch of lookups so you know how many you can afford.",
@@ -255,6 +262,8 @@ server.registerTool(
 server.registerTool(
   "lookup_company",
   {
+    title: "Look up the company behind a domain",
+    annotations: { readOnlyHint: true, openWorldHint: true },
     description:
       "Given a domain, return the company behind it: name, industry, city, country, address and LinkedIn URL. " +
       "Use this when asked who owns or operates a website, or to enrich a domain into firmographics. " +
@@ -308,6 +317,8 @@ server.registerTool(
 server.registerTool(
   "lookup_domain_technologies",
   {
+    title: "List a domain's technology stack",
+    annotations: { readOnlyHint: true, openWorldHint: true },
     description:
       "Given a domain, list the technologies detected on it (analytics, hosting, ecommerce platform, frameworks and so on), " +
       "each with its category and how many sites overall use it. " +
@@ -360,6 +371,8 @@ server.registerTool(
 server.registerTool(
   "lookup_technology",
   {
+    title: "Size a technology's adoption",
+    annotations: { readOnlyHint: true, openWorldHint: true },
     description:
       "Given a technology name, return how widely it is used and its top countries by adoption. " +
       "Use this to size a market or compare platforms, e.g. 'how many sites run Shopify, and where?'. " +
@@ -419,6 +432,8 @@ const BATCH_MAX = 20;
 server.registerTool(
   "lookup_companies",
   {
+    title: "Look up the companies behind many domains",
+    annotations: { readOnlyHint: true, openWorldHint: true },
     description:
       `Look up the companies behind up to ${BATCH_MAX} domains in ONE call, returned as a compact table. ` +
       "Prefer this over repeated lookup_company calls whenever you have several domains in hand - it is one " +
@@ -573,6 +588,8 @@ const BATCH_PER_DOMAIN_MAX = 50;
 server.registerTool(
   "lookup_domains_technologies",
   {
+    title: "List technologies across many domains",
+    annotations: { readOnlyHint: true, openWorldHint: true },
     description:
       `Look up the technologies on up to ${BATCH_MAX} domains in ONE call, returned as a compact table. ` +
       "Prefer this over repeated lookup_domain_technologies calls whenever you have several domains in hand - " +

@@ -21,7 +21,14 @@ Read-only by design. Nothing here writes to any system of yours.
 You need a StackScan account. Sign in, open **API Tokens** in the dashboard, create a
 token, and copy your workspace UUID from the same page.
 
-### Claude Desktop
+### Claude Desktop (extension)
+
+Download `stackscan.mcpb` from the
+[releases page](https://github.com/stackscan/stackscan-mcp/releases), then drag it onto
+**Settings > Extensions**. It asks for your API token and workspace ID and installs the
+rest itself.
+
+### Claude Desktop (manual config)
 
 **Settings → Developer → Edit Config**, then add:
 
@@ -163,6 +170,31 @@ were free.
 redirected, because a redirect would drop the body on POST. If your config still names
 the old host, this server detects it and keeps using the old path shape, so upgrading
 will not break you.
+
+## Privacy Policy
+
+StackScan's privacy policy is at
+[www.stackscan.com/privacy](https://www.stackscan.com/privacy). What it means for this
+server specifically:
+
+**What is collected.** The domains and technology names you look up, sent to
+`api.stackscan.com` over HTTPS along with your API token and workspace ID. Nothing else
+leaves your machine. This server reads no files, opens no ports and keeps no local
+store; the only state it holds is a lookup counter and a credit balance, both in memory
+and both gone when the process exits.
+
+**How it is used and stored.** Lookups are logged against your workspace so credits can
+be metered and the account can be supported. Results come from StackScan's own crawl
+data, not from anything you send.
+
+**Third parties.** Query terms are not sold or shared for advertising. They reach the
+infrastructure providers StackScan runs on, as set out under "Sharing With Service
+Providers" in the policy, and nowhere else.
+
+**Retention.** Covered under "Data Retention" in the policy. Delete your account and
+the associated lookup history goes with it.
+
+**Contact.** hello@stackscan.com, or [www.stackscan.com/contact](https://www.stackscan.com/contact).
 
 ## Links
 

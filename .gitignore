@@ -3,3 +3,7 @@ build/
 
 # npm login writes an auth token here and this repo is public
 .npmrc
+
+# The built extension
+dist/
+*.mcpb

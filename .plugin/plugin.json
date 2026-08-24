@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "StackScan",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Look up the technology stack behind any domain, and the company running it, from inside your assistant.",
   "author": {
     "name": "StackScan",
