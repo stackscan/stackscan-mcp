@@ -70,6 +70,15 @@ for (const t of list.result.tools) {
   const required = t.inputSchema?.required ?? [];
   const props = Object.keys(t.inputSchema?.properties ?? {});
   console.log(`    - ${t.name}(${props.map((p) => (required.includes(p) ? p : p + "?")).join(", ")})`);
+  // The directory rejects tools with no title or hints, and the only place
+  // those show up is the wire, so check them here rather than in the source.
+  const a = t.annotations ?? {};
+  const hints = Object.entries(a)
+    .filter(([k]) => k !== "title")
+    .map(([k, v]) => `${k}=${v}`)
+    .join(" ");
+  console.log(`        title: ${t.title ?? a.title ?? "MISSING"}`);
+  console.log(`        hints: ${hints || "MISSING"}`);
 }
 
 for (const spec of calls) {
