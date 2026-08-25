@@ -84,12 +84,15 @@ for (const t of list.result.tools) {
 for (const spec of calls) {
   const [name, ...rest] = spec.split(":");
   const value = rest.join(":");
+  const list = () => value.split(",").map((d) => d.trim()).filter(Boolean);
+  // Both batch tools take `domains`; only lookup_companies did before, so
+  // lookup_domains_technologies was silently sent a comma-joined `domain`.
   const args = !value
     ? {}
     : name === "lookup_technology"
       ? { technology: value }
-      : name === "lookup_companies"
-        ? { domains: value.split(",").map((d) => d.trim()).filter(Boolean) }
+      : name === "lookup_companies" || name === "lookup_domains_technologies"
+        ? { domains: list() }
         : { domain: value };
   const res = await send("tools/call", { name, arguments: args });
   const body = res.result?.content?.map((c) => c.text).join("\n") ?? JSON.stringify(res.error ?? res);

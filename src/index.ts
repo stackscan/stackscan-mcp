@@ -608,8 +608,10 @@ server.registerTool(
         .string()
         .optional()
         .describe(
-          'Only return technologies in this category, e.g. "Ecommerce" or "Hosting & Infrastructure". ' +
-            "Case-insensitive. Omit for all categories.",
+          'Only return technologies in this TOP-LEVEL group, e.g. "E-commerce & Sales" or "Hosting & Infrastructure". ' +
+            'This is the part BEFORE the slash in lookup_domain_technologies output. The part after it, ' +
+            'such as "Payment Processing", is a sub-category and matches nothing. Case-insensitive. ' +
+            "Omit for all categories.",
         ),
       per_domain: z
         .number()
