@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "stackscan",
   "display_name": "StackScan",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Look up the technology stack behind any domain, and the company running it.",
   "long_description": "StackScan answers two questions about any website: what it is built with, and who is behind it.\n\nAsk what a site runs and you get its detected technologies with categories and global usage counts. Ask who is behind it and you get the company name, industry, city, country, address and LinkedIn URL. Ask about a technology and you get how many sites run it and where they are. Batch tools take up to 100 domains in a single call.\n\nEvery tool is read-only. Nothing here writes to any of your systems.\n\nLookups draw on your StackScan credit balance. Checking the balance is free, and the server enforces its own per-session spend cap so an assistant cannot loop through your credits unattended.",
   "author": {
@@ -77,8 +77,8 @@
   },
   "tools": [
     { "name": "check_credits", "description": "Check the StackScan credit balance. Free, does not consume a credit." },
-    { "name": "lookup_company", "description": "Given a domain, return the company behind it: name, industry, city, country, address and LinkedIn URL." },
-    { "name": "lookup_domain_technologies", "description": "Given a domain, list the technologies detected on it, each with its category and global usage." },
+    { "name": "lookup_company", "description": "Given a domain, return the company behind it: name, industry, city, country, address, LinkedIn URL and an estimated revenue band." },
+    { "name": "lookup_domain_technologies", "description": "Given a domain, list the technologies detected on it, each with its category and global usage, plus its premium (paid) technology count and estimated monthly tech spend." },
     { "name": "lookup_technology", "description": "Given a technology name, return how widely it is used and its top countries by adoption." },
     { "name": "lookup_companies", "description": "Look up the companies behind up to 20 domains in one call." },
     { "name": "lookup_domains_technologies", "description": "Look up the technologies on up to 20 domains in one call." }

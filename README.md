@@ -70,8 +70,8 @@ environment variables. Check your client's own MCP docs for where its config fil
 | Tool | What it does | Cost |
 |---|---|---|
 | `check_credits` | Remaining balance and this month's allocation | free |
-| `lookup_company` | The company behind a domain: name, industry, city, country, LinkedIn | 1 credit |
-| `lookup_domain_technologies` | Technologies on ONE domain, in full: category and global usage for each (`limit`, default 50, max 100) | 1 credit |
+| `lookup_company` | The company behind a domain: name, industry, city, country, LinkedIn, estimated revenue band | 1 credit |
+| `lookup_domain_technologies` | Technologies on ONE domain, in full: category and global usage for each (`limit`, default 50, max 100), plus how many are paid (premium) products and the estimated monthly tech spend | 1 credit |
 | `lookup_technology` | How many sites run a technology, and where they are | 1 credit |
 | `lookup_companies` | The companies behind up to 20 domains, as a compact table | 1 credit per domain with data |
 | `lookup_domains_technologies` | The technologies on up to 20 domains, as a compact table. Optional `category` filter | 1 credit per domain with data |

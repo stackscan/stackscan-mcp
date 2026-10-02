@@ -225,6 +225,25 @@ function budgetNote(): string {
   return `\n\n(Used 1 credit. ${remaining} of this session's ${SESSION_LOOKUP_CAP} lookups remaining.${balance})`;
 }
 
+// The API returns a band code; show it as a range a person can read.
+const REVENUE_BANDS: Record<string, string> = {
+  under_1m: "under $1M",
+  "1m_10m": "$1M to $10M",
+  "10m_50m": "$10M to $50M",
+  "50m_100m": "$50M to $100M",
+  "100m_500m": "$100M to $500M",
+  "500m_1b": "$500M to $1B",
+  "1b_plus": "$1B or more",
+};
+
+function revenueBand(band: string | null | undefined): string | null {
+  return band ? (REVENUE_BANDS[band] ?? band) : null;
+}
+
+function usd(amount: number): string {
+  return "$" + amount.toLocaleString("en-US", { maximumFractionDigits: amount >= 100 ? 0 : 2 });
+}
+
 const server = new McpServer({ name: "stackscan", version: PKG_VERSION });
 
 server.registerTool(
@@ -265,7 +284,7 @@ server.registerTool(
     title: "Look up the company behind a domain",
     annotations: { readOnlyHint: true, openWorldHint: true },
     description:
-      "Given a domain, return the company behind it: name, industry, city, country, address and LinkedIn URL. " +
+      "Given a domain, return the company behind it: name, industry, city, country, address, LinkedIn URL and an estimated revenue band. " +
       "Use this when asked who owns or operates a website, or to enrich a domain into firmographics. " +
       "Costs 1 credit.",
     inputSchema: {
@@ -287,6 +306,7 @@ server.registerTool(
         country: string | null;
         address: string | null;
         linkedin_url: string | null;
+        estimated_revenue_band?: string | null;
       };
     };
     const result = await apiGet<Company>("companies/lookup", { domain });
@@ -306,6 +326,7 @@ server.registerTool(
           field("Country", c.country),
           field("Address", c.address),
           field("LinkedIn", c.linkedin_url),
+          field("Revenue", revenueBand(c.estimated_revenue_band) ? `${revenueBand(c.estimated_revenue_band)} (estimated)` : null),
           `  ${"Technologies".padEnd(14)}${result.data.total_technologies_tracked} tracked on this domain`,
           `  ${"Updated".padEnd(14)}${result.data.last_updated}`,
         ].join("\n") +
@@ -321,7 +342,7 @@ server.registerTool(
     annotations: { readOnlyHint: true, openWorldHint: true },
     description:
       "Given a domain, list the technologies detected on it (analytics, hosting, ecommerce platform, frameworks and so on), " +
-      "each with its category and how many sites overall use it. " +
+      "each with its category and how many sites overall use it, plus how many are paid (premium) products and the estimated monthly spend on the stack. " +
       "Use this to answer 'what is this site built with?'. Costs 1 credit.",
     inputSchema: {
       domain: z.string().describe("Bare domain, e.g. example.com (no scheme, no path)"),
@@ -341,6 +362,8 @@ server.registerTool(
         child_category: string | null;
         total_sites: number;
       }>;
+      premium_technologies?: number;
+      monthly_tech_spend_usd?: number;
       pagination: { total: number };
     };
     const result = await apiGet<Domain>("domains/lookup", { domain, per_page: limit ?? 50 });
@@ -361,6 +384,8 @@ server.registerTool(
 
     return text(
       `Technologies on ${d.domain} (${shown} of ${d.pagination.total}, updated ${d.last_updated})\n` +
+        (d.premium_technologies !== undefined ? `  Premium (paid) technologies: ${d.premium_technologies}\n` : "") +
+        (d.monthly_tech_spend_usd !== undefined ? `  Estimated tech spend: ${usd(d.monthly_tech_spend_usd)} a month\n` : "") +
         rows.join("\n") +
         more +
         budgetNote(),
@@ -483,6 +508,7 @@ server.registerTool(
         city: string | null;
         country: string | null;
         linkedin_url: string | null;
+        estimated_revenue_band?: string | null;
       };
     };
     type Batch = {
@@ -523,12 +549,12 @@ server.registerTool(
     const lines = [
       `${d.requested} domains requested, ${hits.length} with data (${d.credits_charged} credits).`,
       "",
-      `  ${"DOMAIN".padEnd(26)}${"COMPANY".padEnd(24)}${"INDUSTRY".padEnd(20)}${"COUNTRY".padEnd(16)}TECH`,
+      `  ${"DOMAIN".padEnd(26)}${"COMPANY".padEnd(24)}${"INDUSTRY".padEnd(20)}${"COUNTRY".padEnd(16)}${"REVENUE".padEnd(16)}TECH`,
       ...hits.map(
         (r) =>
           `  ${cell(r.domain, 26)}${cell(r.company!.name, 24)}` +
           `${cell(r.company!.industry, 20)}${cell(r.company!.country, 16)}` +
-          `${r.total_technologies_tracked ?? 0}`,
+          `${cell(revenueBand(r.company!.estimated_revenue_band), 16)}${r.total_technologies_tracked ?? 0}`,
       ),
     ];
 
@@ -652,10 +678,10 @@ server.registerTool(
     const perDomain = per_domain ?? BATCH_PER_DOMAIN;
 
     type TechRow = {
-      technology?: string;
+      techapi_id?: string | null;
       name?: string;
-      category?: string | null;
-      sub_category?: string | null;
+      parent_category?: string | null;
+      child_category?: string | null;
       total_sites?: number;
     };
     type BatchResult = {
@@ -664,6 +690,8 @@ server.registerTool(
       error?: string;
       technologies?: TechRow[];
       total_technologies?: number;
+      premium_technologies?: number;
+      monthly_tech_spend_usd?: number;
       has_more?: boolean;
     };
     type Batch = {
@@ -713,11 +741,15 @@ server.registerTool(
     // breadth view. Depth (category and global usage per technology) is what
     // lookup_domain_technologies is for, and the description says so.
     for (const r of hits) {
-      const names = (r.technologies ?? []).map((t) => t.technology ?? t.name ?? "?");
+      const names = (r.technologies ?? []).map((t) => t.name ?? "?");
       const total = r.total_technologies ?? names.length;
       const hidden = total - names.length;
       const more = hidden > 0 ? ` (+${hidden} more)` : "";
-      lines.push(`  ${cell(r.domain, 26)}${names.join(", ")}${more}`);
+      const figures =
+        r.premium_technologies !== undefined && r.monthly_tech_spend_usd !== undefined
+          ? ` [${r.premium_technologies} premium, ${usd(r.monthly_tech_spend_usd)}/month]`
+          : "";
+      lines.push(`  ${cell(r.domain, 26)}${names.join(", ")}${more}${figures}`);
     }
 
     if (d.not_found.length > 0) {
